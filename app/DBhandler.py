@@ -52,7 +52,7 @@ class DatabaseHandler(object):
         mycursor=self.mydb.cursor()
         sql = "DELETE FROM `items` WHERE `itemid`={};".format(item_id)
         mycursor.execute(sql)
-        self.mydb.commit
+        self.mydb.commit()
         mycursor.close()
         self.mydb.close()
         
