@@ -7,6 +7,7 @@ Created on Thu Oct 31 16:38:39 2019
 
 from DBhandler import DatabaseHandler as db
 from User import User
+from Items import Item as item
 
 testdb = db()
 user = User()
@@ -14,6 +15,13 @@ user.username="hawkeye"
 user.email="hawkeye@gmail.com"
 user.password="xzcv"
 
-excep = testdb.register_user(user)
-exc = testdb.login_user(user.email,user.password)
+items = item()
+name = 'name'
+loc = 'location'
+desc = 'description'
+
+
+items.newItem(name,loc,desc)
+testdb.insert_item_db(items)
+
 
