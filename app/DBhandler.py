@@ -34,14 +34,13 @@ class DatabaseHandler(object):
         val = (items.category,items.name,items.location,items.desc,items.date,item_id)
         res = mycursor.execute(sql,val)
         self.mydb.commit()
-        print(mycursor.rowcount, "record inserted.")
         mycursor.close()
         self.mydb.close()
         if res==0:
             return False
         else:
-            return True
-            
+            return True           
+        
     def view_items(self):
         mycursor=self.mydb.cursor()
         sql = "SELECT * FROM `items`"
@@ -56,7 +55,6 @@ class DatabaseHandler(object):
         mycursor=self.mydb.cursor()
         sql = "DELETE FROM `items` WHERE `itemid`={};".format(item_id)
         res = mycursor.execute(sql)
-        mycursor.execute(sql)
         self.mydb.commit()
         mycursor.close()
         self.mydb.close()
