@@ -10,7 +10,7 @@ CREATE TABLE `users` (
   UNIQUE INDEX `email_UNIQUE` (`email` ASC)
 );
 CREATE TABLE `items` (
-  `itemid` INT NOT NULL,
+  `itemid` INT NOT NULL AUTO_INCREMENT,
   `item_category` VARCHAR(100) NULL,
   `item_name` VARCHAR(100) NULL,
   `location` VARCHAR(100) NULL,
