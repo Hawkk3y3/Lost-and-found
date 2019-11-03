@@ -55,8 +55,8 @@ class DatabaseHandler(object):
     def delete_item(self,item_id):
         mycursor=self.mydb.cursor()
         sql = "DELETE FROM `items` WHERE `itemid`={};".format(item_id)
-        print(sql)
         res = mycursor.execute(sql)
+        mycursor.execute(sql)
         self.mydb.commit()
         mycursor.close()
         self.mydb.close()
