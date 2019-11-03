@@ -1,6 +1,6 @@
 # Lost-and-found
 
-Just Type docker-compose up 
+Just docker-compose up 
 
 For Endpoints Detail visit the link below
 
