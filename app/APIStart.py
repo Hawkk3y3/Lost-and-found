@@ -17,16 +17,7 @@ app = Flask(__name__)
 
 
 
-items = item()
-item2 = item()
 
-name = "Belt"
-loc = "found laying on the Islamabad Expressway near khanaPul"
-desc = "Brown Belt with a fashionable buckle"
-#items.newItem(name,loc,desc)
-#
-#
-#testdb.insert_item_db(items)
 @app.route('/')
 def index():
     return jsonify('This is index page')
@@ -38,7 +29,7 @@ def create():
         name = request.json['name']
         loc = request.json['location']
         desc = request.json['description']
-    
+        items = item()
         items.newItem(name,loc,desc)
         testdb.insert_item_db(items)
         
@@ -57,13 +48,17 @@ def update():
         name = request.json['name']
         loc = request.json['location']
         desc = request.json['description']
-    
+        items = item()
         items.newItem(name,loc,desc)
-        testdb.update_item(items,item_id)
-        
-        resp = jsonify({"Action":'Item Updated Successfully'})
-        resp.status_code = 200
-        return resp
+        result = testdb.update_item(items,item_id)
+        if result:
+            resp = jsonify({"Action":'Item Updated Successfully'})
+            resp.status_code = 200
+            return resp
+        else:
+            resp = jsonify({"Action":'Item with Item Id {} is not found'.format(item_id)})
+            resp.status_code = 200
+            return resp
         
     except Exception as e:
         print(e)
@@ -77,10 +72,15 @@ def view():
 def delete_item(item_id):
     try:
         testdb = db()
-        testdb.delete_item(item_id)
-        resp = jsonify({"Action":'Item Deleted Successfully {}'.format(item_id)})
-        resp.status_code = 200
-        return resp
+        result=testdb.delete_item(item_id)
+        if result:
+            resp = jsonify({"Action":'Item Deleted Successfully {}'.format(item_id)})
+            resp.status_code = 200
+            return resp
+        else:
+            resp = jsonify({"Action":'Item Not Found with id {}'.format(item_id)})
+            resp.status_code = 200
+            return resp
     except Exception as e:
         print(e)
 @app.route('/item/search/<string:loc>',methods=['GET'])
