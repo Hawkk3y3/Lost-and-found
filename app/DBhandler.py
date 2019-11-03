@@ -32,11 +32,14 @@ class DatabaseHandler(object):
         mycursor=self.mydb.cursor()
         sql = "UPDATE `items` SET `item_category` =%s,`item_name` =%s,`location` =%s,`description` =%s,`date` =%s WHERE `itemid` =%s;"
         val= (items.category,items.name,items.location,items.desc,items.date,item_id)
-        mycursor.execute(sql,val)
+        res = mycursor.execute(sql,val)
         self.mydb.commit()
-        print(mycursor.rowcount, "record inserted.")
         mycursor.close()
         self.mydb.close()
+        if res==0:
+            return False
+        else:
+            return True
         
     def view_items(self):
         mycursor=self.mydb.cursor()
@@ -51,10 +54,14 @@ class DatabaseHandler(object):
     def delete_item(self,item_id):
         mycursor=self.mydb.cursor()
         sql = "DELETE FROM `items` WHERE `itemid`={};".format(item_id)
-        mycursor.execute(sql)
+        res=mycursor.execute(sql)
         self.mydb.commit()
         mycursor.close()
         self.mydb.close()
+        if res == 1:
+            return True
+        else:
+            return False
         
     def search_item_by_loc(self,loc):
         mycursor=self.mydb.cursor()
