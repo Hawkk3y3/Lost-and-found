@@ -8,50 +8,95 @@ Created on Thu Oct 31 14:08:48 2019
 from flask import Flask
 from flask import request
 from flask import jsonify
-import json
-from app.DBhandler import DatabaseHandler
-from app.Items import Item
-from app.User import User
+from app.User import User, UserBase
+from app.Item import Item, ItemBase
+from sqlalchemy import create_engine
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
+database = 'lost_and_found'
+user = 'root'
+password = 'xzcv'
+host = 'localhost'
+port = '3306'
+
+"""-----------------------------------------------------------------------------"""
+"""This Section is to create database if it doesn't already exists"""
+connection_string = 'mysql://{0}:{1}@{2}:{3}'.format(user, password, host, port)
+# This engine just used to query for list of databases
+mysql_engine = create_engine(connection_string)
+
+# Query for existing databases
+existing_databases = mysql_engine.execute("SHOW DATABASES;")
+# Results are a list of single item tuples, so unpack each tuple
+existing_databases = [d[0] for d in existing_databases]
+
+# Create database if not exists
+if database not in existing_databases:
+    mysql_engine.execute("CREATE DATABASE {0}".format(database))
+"""--------------------------------------------------------------------------------"""
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = connection_string + '/{}'.format(database)
+
+db = SQLAlchemy(app)
 
 
-@app.route('/')
+@app.before_first_request
+def setup():
+    """Check Database if it exists with the Tables of our model"""
+    mysql_engine.execute("use {};".format(database))
+    existing_tables = mysql_engine.execute("Show Tables;")
+    existing_tables = [d[0] for d in existing_tables]
+    table = User.__tablename__
+    if table not in existing_tables:
+        UserBase.metadata.drop_all(bind=db.engine)
+        ItemBase.metadata.drop_all(bind=db.engine)
+        UserBase.metadata.create_all(bind=db.engine)
+        ItemBase.metadata.create_all(bind=db.engine)
+
+
+@app.route("/")
 def index():
-    return jsonify('This is index page')
+    return "Hello World"
 
 
 @app.route('/items/create', methods=['POST'])
 def create():
     try:
-        database_helper = DatabaseHandler()
         name = request.json['name']
         loc = request.json['location']
         desc = request.json['description']
-        items = Item()
-        items.new_item(name, loc, desc)
-        database_helper.insert_item_db(items)
+        item = Item(name, loc, desc)
+        db.session.add(item)
+        db.session.commit()
+        db.session.close()
 
         resp = jsonify({"Action": 'Item Added Successfully'})
         resp.status_code = 200
         return resp
 
     except Exception as e:
-        print(e)
+        resp = jsonify({"error": e.__str__()})
+        resp.status_code = 200
+        return resp
 
 
 @app.route('/items/update', methods=['POST'])
 def update():
     try:
-        database_helper = DatabaseHandler()
         item_id = request.json['item_id']
         name = request.json['name']
         loc = request.json['location']
         desc = request.json['description']
-        items = Item()
-        items.new_item(name, loc, desc)
-        result = database_helper.update_item(items, item_id)
-        if result:
+        item = db.session.query(Item).filter(Item.id == item_id).one()
+        item.item_name = name
+        item.location = loc
+        item.description = desc
+        db.session.commit()
+        db.session.close()
+
+        if item:
             resp = jsonify({"Action": 'Item Updated Successfully'})
             resp.status_code = 200
             return resp
@@ -61,22 +106,25 @@ def update():
             return resp
 
     except Exception as e:
-        print(e)
+        resp = jsonify({"error": e.__str__()})
+        resp.status_code = 200
+        return resp
 
 
 @app.route('/items/view', methods=['GET'])
 def view():
-    database_helper = DatabaseHandler()
-    result_list = database_helper.view_items()
-    json_string = json.dumps([ob.__dict__ for ob in result_list])
-    return json_string
+    items = db.session.query(Item).all()
+    db.session.close()
+    return jsonify(data=[item.serialize() for item in items])
 
 
 @app.route('/items/delete/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
     try:
-        database_helper = DatabaseHandler()
-        result = database_helper.delete_item(item_id)
+
+        result = db.session.query(Item).filter(Item.id == item_id).delete()
+        db.session.commit()
+        db.session.close()
         if result:
             resp = jsonify({"Action": 'Item Deleted Successfully {}'.format(item_id)})
             resp.status_code = 200
@@ -86,64 +134,66 @@ def delete_item(item_id):
             resp.status_code = 200
             return resp
     except Exception as e:
-        print(e)
+        resp = jsonify({"error": e.__str__()})
+        resp.status_code = 200
+        return resp
 
 
 @app.route('/item/search/<string:loc>', methods=['GET'])
 def search_item(loc):
     try:
-        database_helper = DatabaseHandler()
-        result_list = database_helper.search_item_by_loc(loc)
-        json_string = json.dumps([ob.__dict__ for ob in result_list])
-        return json_string
+        items = db.session.query(Item).filter(Item.location == loc).all()
+        db.session.close()
+        return jsonify(data=[item.serialize() for item in items])
     except Exception as e:
-        print(e)
+        resp = jsonify({"error": e.__str__()})
+        resp.status_code = 200
+        return resp
 
 
 @app.route('/item/search/<string:name>', methods=['PUT'])
 def search_item_name(name):
     try:
-        database_helper = DatabaseHandler()
-        result_list = database_helper.search_item_by_name(name)
-        json_string = json.dumps([ob.__dict__ for ob in result_list])
-        return json_string
+        items = db.session.query(Item).filter(Item.item_name == name).all()
+        db.session.close()
+        return jsonify(data=[item.serialize() for item in items])
     except Exception as e:
-        print(e)
+        resp = jsonify({"error": e.__str__()})
+        resp.status_code = 200
+        return resp
 
 
 @app.route('/user/register', methods=['POST'])
 def register_user():
     try:
-        database_helper = DatabaseHandler()
         username = request.json['username']
         email = request.json['email']
-        password = request.json['password']
-        user = User()
-        user.user(username, email, password)
+        passw = request.json['password']
 
-        exception = database_helper.register_user(user)
+        new_user = User(username, email, passw)
 
-        if exception:
-            resp = jsonify({"Action": 'Error occured {}'.format(exception)})
-            resp.status_code = 200
-            return resp
-        else:
-            resp = jsonify({"Action": 'User Registered Successfully'})
-            resp.status_code = 200
-            return resp
+        db.session.add(new_user)
+        db.session.commit()
+        db.session.close()
+
+        resp = jsonify({"Action": 'User Registered Successfully'})
+        resp.status_code = 200
+        return resp
 
     except Exception as e:
-        print(e)
+        resp = jsonify({"error": e.__str__()})
+        resp.status_code = 200
+        return resp
 
 
 @app.route('/user/login', methods=['POST'])
 def login_user():
     try:
-        database_helper = DatabaseHandler()
         email = request.json['email']
-        password = request.json['password']
+        passw = request.json['password']
+        check = db.session.query(User).filter(User.email == email).filter(User.password == passw).all()
 
-        if database_helper.login_user(email, password):
+        if check.__len__ == 1:
             resp = jsonify({"Action": 'User Logged In Successfully'})
             resp.status_code = 200
             return resp
@@ -153,8 +203,11 @@ def login_user():
             return resp
 
     except Exception as e:
-        print(e)
+        resp = jsonify({"error": e.__str__()})
+        resp.status_code = 200
+        return resp
 
 
-if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0')
+if __name__ == "__main__":
+    app.run('127.0.0.1', 5000)
+

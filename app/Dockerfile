@@ -8,9 +8,7 @@ COPY requirements.txt /app
 RUN pip install -r requirements.txt
 
 COPY APIStart.py /app
-COPY DBhandler.py /app
-COPY Items.py /app
-COPY playground.py /app
+COPY Item.py /app
 COPY User.py /app
 
 CMD python APIStart.py
