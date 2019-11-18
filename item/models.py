@@ -1,12 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Oct 31 14:06:01 2019
-
-@author: Hawkeye
-"""
-from sqlalchemy import Column, String, Boolean, DateTime, Integer
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+
+from sqlalchemy import Column, String, DateTime, Integer
+from sqlalchemy.ext.declarative import declarative_base
 
 ItemBase = declarative_base()
 
@@ -28,3 +23,15 @@ class Item(ItemBase):
     def serialize(self):
         return {'item_id': self.id, 'category': self.category, 'item_name': self.item_name, 'location': self.location,
                 'description': self.description, 'date_created': self.date_created}
+
+    def update_item(self, db, item_id):
+        try:
+            item = db.session.query(Item).filter(Item.id == item_id).one()
+            item.item_name = self.item_name
+            item.location = self.loc
+            item.description = self.description
+            db.session.commit()
+            db.session.close()
+            return True
+        except Exception as e:
+            return e.__str__()

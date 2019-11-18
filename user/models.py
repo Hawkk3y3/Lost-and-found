@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Nov  1 10:24:12 2019
+from datetime import datetime
 
-@author: Hawkeye
-"""
 from sqlalchemy import Column, String, Boolean, DateTime, Integer
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
+
 
 UserBase = declarative_base()
 
@@ -30,3 +26,8 @@ class User(UserBase):
     def serialize(self):
         return {'id': self.id, 'username': self.username, 'email': self.email, 'password': self.password,
                 'verified': self.verified, 'date_created': self.date_created}
+
+    @staticmethod
+    def confirm_email(db, email):
+        result_user = db.session.query(User).filter(User.email == email).one()
+        result_user.verified = True
