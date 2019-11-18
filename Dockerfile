@@ -10,7 +10,7 @@ RUN pip install -r requirements.txt
 COPY run.py /app
 COPY config.py /app
 COPY __init__.py /app
-COPY ./item /app
-COPY ./user /app
+COPY ./item /app/item
+COPY ./user /app/user
 
 CMD python run.py

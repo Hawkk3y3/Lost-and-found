@@ -1,9 +1,9 @@
-DEBUG = True
+DEBUG = False
 
 database = 'lost_and_found'
 user = 'root'
 password = 'xzcv'
-host = 'localhost'
+host = 'db'
 port = '3306'
 connection_string = 'mysql://{0}:{1}@{2}:{3}'.format(user, password, host, port)
 
