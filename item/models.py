@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, String, DateTime, Integer
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.exc import SQLAlchemyError
 
 ItemBase = declarative_base()
 
@@ -32,6 +33,6 @@ class Item(ItemBase):
             item.description = self.description
             db.session.commit()
             db.session.close()
-            return True
-        except Exception as e:
-            return e.__str__()
+
+        except SQLAlchemyError as er:
+            raise er

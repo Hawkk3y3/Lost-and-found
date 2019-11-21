@@ -1,6 +1,7 @@
 from flask import request, jsonify, url_for
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
+from sqlalchemy.exc import IntegrityError
 
 from run import app, db
 from user.models import User
@@ -29,13 +30,23 @@ def register_user():
 
         send_email(email)
 
-        resp = jsonify({"Action": 'User Registered Successfully'})
-        resp.status_code = 200
+        return 201
+
+    except IntegrityError:
+        resp = jsonify({"error": 'User with this email Already Exists'})
+        # Status Code 409 is used when there is conflict between resources
+        resp.status_code = 409
+        return resp
+
+    except KeyError as k:
+        resp = jsonify({"error": k.args[0]+' Value is missing'})
+        # Status Code 400 is used when the request made by the client is not understandable by the server
+        resp.status_code = 400
         return resp
 
     except Exception as e:
-        resp = jsonify({"error": e.__str__()})
-        resp.status_code = 200
+        resp = jsonify({"error": 'Some Error occurred'})
+        resp.status_code = 500
         return resp
 
 
@@ -52,17 +63,23 @@ def login_user():
                 return resp
             else:
                 resp = jsonify({"error": 'User email is not verified'})
-                resp.status_code = 200
+                resp.status_code = 403
                 return resp
 
         else:
             resp = jsonify({"Action": 'User Login Failure', "reason": "Email or Password Incorrect"})
-            resp.status_code = 200
+            resp.status_code = 401
             return resp
 
-    except Exception as e:
-        resp = jsonify({"error": e.__str__()})
-        resp.status_code = 200
+    except KeyError as k:
+        resp = jsonify({"error": k.args[0]+' Value is missing'})
+        # Status Code 400 is used when the request made by the client is not understandable by the server
+        resp.status_code = 400
+        return resp
+
+    except Exception:
+        resp = jsonify({"error": 'Something Went Wrong'})
+        resp.status_code = 500
         return resp
 
 
@@ -75,9 +92,9 @@ def confirm_email(token):
         db.session.close()
 
     except SignatureExpired:
-        return jsonify({"error": "The email link Expired"})
+        return jsonify({"error": "The email link Expired"}), 406
 
-    return jsonify({"action": "The Email is confirmed"})
+    return jsonify({"action": "The Email is confirmed"}), 200
 
 
 def send_email(email):
