@@ -12,4 +12,4 @@ db = SQLAlchemy(app)
 if __name__ == "__main__":
     from item.api import *
     from user.api import *
-    app.run('0.0.0.0', 5000)
+    app.run(host='0.0.0.0', port=5000)

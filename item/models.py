@@ -1,20 +1,18 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, Integer
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 
-ItemBase = declarative_base()
+from run import db
 
 
-class Item(ItemBase):
+class Item(db.Model):
     __tablename__ = 'Items'
-    id = Column('item_id', Integer, primary_key=True)
-    category = Column('category', String(50), default='lost/found')
-    item_name = Column('item_name', String(100))
-    location = Column('location', String(100))
-    description = Column('description', String(500))
-    date_created = Column('date_created', DateTime, default=datetime.now)
+    id = db.Column('item_id', db.Integer, primary_key=True)
+    category = db.Column('category', db.String(50), default='lost/found')
+    item_name = db.Column('item_name', db.String(100))
+    location = db.Column('location', db.String(100))
+    description = db.Column('description', db.String(500))
+    date_created = db.Column('date_created', db.DateTime, default=datetime.now)
 
     def __init__(self, item_name, location, description):
         self.item_name = item_name

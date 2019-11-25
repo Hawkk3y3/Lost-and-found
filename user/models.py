@@ -1,20 +1,16 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, Boolean, DateTime, Integer
-from sqlalchemy.ext.declarative import declarative_base
+from run import db
 
 
-UserBase = declarative_base()
-
-
-class User(UserBase):
+class User(db.Model):
     __tablename__ = 'users'
-    id = Column('user_id', Integer, primary_key=True)
-    username = Column('username', String(50))
-    email = Column('email', String(100))
-    password = Column('password', String(100))
-    verified = Column('verified', Boolean)
-    date_created = Column('date_created', DateTime, default=datetime.now)
+    id = db.Column('user_id', db.Integer, primary_key=True)
+    username = db.Column('username', db.String(50))
+    email = db.Column('email', db.String(100))
+    password = db.Column('password', db.String(100))
+    verified = db.Column('verified', db.Boolean)
+    date_created = db.Column('date_created', db.DateTime, default=datetime.now)
 
     def __init__(self, username, email, password, verified=False):
         self.username = username
@@ -28,6 +24,6 @@ class User(UserBase):
                 'verified': self.verified, 'date_created': self.date_created}
 
     @staticmethod
-    def confirm_email(db, email):
-        result_user = db.session.query(User).filter(User.email == email).one()
+    def confirm_email(database, email):
+        result_user = database.session.query(User).filter(User.email == email).one()
         result_user.verified = True

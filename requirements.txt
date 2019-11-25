@@ -3,3 +3,5 @@ flask-SQLAlchemy
 flask-mail
 mysqlclient
 itsdangerous
+flask-script
+flask-migrate

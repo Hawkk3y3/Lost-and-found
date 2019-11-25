@@ -1,22 +1,8 @@
 from flask import request, jsonify
-import sqlalchemy
+from sqlalchemy.exc import SQLAlchemyError
 
 from run import app, db
 from item.models import Item
-from item.models import ItemBase
-from user.models import UserBase
-from config import SQLALCHEMY_DATABASE_URI
-from sqlalchemy.exc import SQLAlchemyError
-
-
-@app.before_first_request
-def setup():
-    engine = sqlalchemy.create_engine(SQLALCHEMY_DATABASE_URI)
-    ItemBase.metadata.drop_all(engine)
-    UserBase.metadata.drop_all(engine)
-
-    ItemBase.metadata.create_all(engine)
-    UserBase.metadata.create_all(engine)
 
 
 @app.route("/")
