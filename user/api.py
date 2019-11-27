@@ -15,7 +15,7 @@ def user_index():
     return "Hello World"
 
 
-@app.route('/user/register', methods=['POST'])
+@app.route('/user/signup', methods=['POST'])
 def register_user():
     try:
         username = request.json['username']

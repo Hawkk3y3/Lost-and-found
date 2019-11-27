@@ -10,18 +10,14 @@ def index():
     return "Index Page"
 
 
-@app.route("/items")
-def item_index():
-    return "Hello World"
-
-
-@app.route('/items/create', methods=['POST'])
+@app.route('/items', methods=['POST'])
 def create():
     try:
         name = request.json['name']
         loc = request.json['location']
+        category = request.json['category']
         desc = request.json['description']
-        item = Item(name, loc, desc)
+        item = Item(name, loc, category, desc)
         db.session.add(item)
         db.session.commit()
         db.session.close()
@@ -36,21 +32,24 @@ def create():
         resp.status_code = 400
         return resp
 
-    except Exception as e:
+    except SQLAlchemyError as e:
         resp = jsonify({"error": 'Something went wrong'})
         resp.status_code = 500
         return resp
 
 
-@app.route('/items/update', methods=['POST'])
-def update():
+@app.route('/items/<int:item_id>', methods=['PATCH'])
+def update(item_id):
     try:
-        item_id = request.json['item_id']
         name = request.json['name']
         loc = request.json['location']
+        category = request.json['category']
         desc = request.json['description']
-        new_item = Item(name, loc, desc)
-        new_item.update_item(db, item_id)
+        new_item = Item(name, loc, category, desc)
+        item = db.session.query(Item).filter(Item.id == item_id).one()
+        new_item.update_item(item)
+        db.session.commit()
+        db.session.close()
         resp = jsonify({"Action": 'Item Updated Successfully'})
         resp.status_code = 200
         return resp
@@ -67,19 +66,7 @@ def update():
         return resp
 
 
-@app.route('/items/view', methods=['GET'])
-def view():
-    try:
-        items = db.session.query(Item).all()
-        db.session.close()
-        return jsonify(data=[item.serialize() for item in items])
-    except SQLAlchemyError:
-        resp = jsonify({"error": 'something went wrong'})
-        resp.status_code = 500
-        return resp
-
-
-@app.route('/items/delete/<int:item_id>', methods=['DELETE'])
+@app.route('/items/<int:item_id>', methods=['DELETE'])
 def delete_item(item_id):
     try:
         result = db.session.query(Item).filter(Item.id == item_id).delete()
@@ -100,26 +87,41 @@ def delete_item(item_id):
         return resp
 
 
-@app.route('/items/search/<string:loc>', methods=['GET'])
-def search_item(loc):
+@app.route('/items', methods=['GET'])
+def search_item():
     try:
-        items = db.session.query(Item).filter(Item.location == loc).all()
-        db.session.close()
-        return jsonify(data=[item.serialize() for item in items])
+        args = request.args
+        if args.__len__() == 0:
+            items = db.session.query(Item).all()
+            db.session.close()
+            return jsonify(data=[item.serialize() for item in items])
+        elif 'name' in args and 'location' in args:
+            loc = request.args.get('location', '')
+            name = request.args.get('name', '')
+            items = db.session.query(Item).filter_by(location=loc, item_name=name).all()
+            db.session.close()
+            return jsonify(data=[item.serialize() for item in items])
+
+        elif 'name' in args:
+            name = request.args.get('name', '')
+            items = db.session.query(Item).filter_by(item_name=name).all()
+            db.session.close()
+            return jsonify(data=[item.serialize() for item in items])
+        elif 'location' in args:
+            loc = request.args.get('location', '')
+            items = db.session.query(Item).filter_by(location=loc).all()
+            db.session.close()
+            return jsonify(data=[item.serialize() for item in items])
+        else:
+            resp = jsonify({"error": 'Query Parameters not defined correctly'})
+            resp.status_code = 400
+            return resp
+
     except SQLAlchemyError as e:
         resp = jsonify({"error": 'something went wrong'})
         resp.status_code = 500
         return resp
-
-
-@app.route('/items/search/<string:name>', methods=['GET'])
-def search_item_name(name):
-    try:
-        items = db.session.query(Item).filter(Item.item_name == name).all()
-        db.session.close()
-        return jsonify(data=[item.serialize() for item in items])
-
-    except SQLAlchemyError as e:
+    except Exception as e:
         resp = jsonify({"error": 'something went wrong'})
         resp.status_code = 500
         return resp
