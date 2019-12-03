@@ -8,7 +8,7 @@ port = '3306'
 connection_string = 'mysql://{0}:{1}@{2}:{3}'.format(user, password, host, port)
 
 SQLALCHEMY_TRACK_MODIFICATIONS = False
-SQLALCHEMY_DATABASE_URI = connection_string + '/{}'.format(database)
+SQLALCHEMY_DATABASE_URI = '{}/{}'.format(connection_string, database)
 
 SECRET_KEY = "ThisisaSecret"
 
