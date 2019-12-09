@@ -6,6 +6,7 @@ services:
       - .:/app
     links:
       - db
+      - redis
     depends_on:
       - db
     entrypoint: /app/entrypoint.sh
@@ -13,6 +14,20 @@ services:
       - FLASK_APP=/app/run.py
     ports:
       - "5000:5000"
+
+  redis:
+    image: redis:latest
+    hostname: redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: /app/run_celery.sh
+    volumes:
+      - .:/app
+    links:
+      - redis
 
   db:
     image: mysql:5.7
