@@ -3,7 +3,7 @@ from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from sqlalchemy.exc import IntegrityError
 
-from run import app, db
+from run import app, db, celery
 from user.models import User
 
 mail = Mail(app)
@@ -30,7 +30,7 @@ def register_user():
 
         send_email(email)
 
-        return 201
+        return jsonify({"msg": "Created Successfully"}), 201
 
     except IntegrityError:
         resp = jsonify({"error": 'User with this email Already Exists'})
@@ -39,7 +39,7 @@ def register_user():
         return resp
 
     except KeyError as k:
-        resp = jsonify({"error": k.args[0]+' Value is missing'})
+        resp = jsonify({"error": k.args[0] + ' Value is missing'})
         # Status Code 400 is used when the request made by the client is not understandable by the server
         resp.status_code = 400
         return resp
@@ -72,7 +72,7 @@ def login_user():
             return resp
 
     except KeyError as k:
-        resp = jsonify({"error": k.args[0]+' Value is missing'})
+        resp = jsonify({"error": k.args[0] + ' Value is missing'})
         # Status Code 400 is used when the request made by the client is not understandable by the server
         resp.status_code = 400
         return resp
@@ -98,9 +98,20 @@ def confirm_email(token):
 
 
 def send_email(email):
-    token = serializer.dumps(email, salt='confirm_email')
+    try:
+        if email != 'abc':
+            token = serializer.dumps(email, salt='confirm_email')
+            link = url_for('confirm_email', token=token, _external=True)
+            send_async_email.delay(email, link)
+    except Exception as e:
+        raise e
 
-    msg = Message('Confirm Email', recipients=[email])
-    link = url_for('confirm_email', token=token, _external=True)
-    msg.body = "press the link to confirm your email {}".format(link)
-    mail.send(msg)
+
+@celery.task(name='user.api.send_async_email')
+def send_async_email(email, link):
+    try:
+        msg = Message('Confirm Email', recipients=[email])
+        msg.body = "press the link to confirm your email {}".format(link)
+        mail.send(msg)
+    except Exception as e:
+        raise e
