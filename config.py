@@ -24,3 +24,10 @@ MAIL_DEBUG = False
 MAIL_DEFAULT_SENDER = ('Muhammad Usman', 'usmanmani781@gmail.com')
 MAIL_MAX_EMAIL = None
 MAIL_ASCII_ATTACHMENT = False
+
+"""-------------------------------------------------"""
+"""Celery Configurations"""
+celery_host = 'redis'
+celery_port = '6379'
+CELERY_BROKER_URL = 'redis://{0}:{1}/0'.format(celery_host, celery_port)
+CELERY_RESULT_BACKEND = 'redis://{0}:{1}/0'.format(celery_host, celery_port)
